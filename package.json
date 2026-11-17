@@ -1,8 +1,8 @@
 {
   "name": "roamly",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Roamly - secure travel search backend using real travel APIs",
+  "description": "Roamly multi-stop travel planner with provider-sourced search results",
   "scripts": {
     "start": "node server.js"
   },

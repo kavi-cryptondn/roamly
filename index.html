@@ -1,61 +1,124 @@
-# Roamly travel API setup
-
-This app uses three live data APIs on the backend:
-- Amadeus for flight and hotel offers
-- Frankfurter for EUR conversion
-- Open-Meteo for weather
-
-## Important
-- Do not put API keys in the frontend.
-- If no provider credentials are configured, the app will show a graceful error rather than inventing a price.
-- Prices are provider-sourced only; the app does not estimate or fabricate them.
-
-## Environment variables
-Set these in your shell or hosting platform before running:
-
-```bash
-export AMADEUS_CLIENT_ID="your-amadeus-key"
-export AMADEUS_CLIENT_SECRET="your-amadeus-secret"
-export AMADEUS_BASE_URL="https://test.api.amadeus.com"  # use production URL for live app
-export ALLOWED_ORIGIN="http://localhost:3000"
-export PORT=3000
-```
-
-## Running locally
-
-```bash
-npm install
-npm start
-```
-
-Check:
-
-```bash
-curl http://localhost:3000/api/health
-```
-
-Example flight search:
-
-```bash
-curl "http://localhost:3000/api/flights?origin=JFK&destination=LHR&departureDate=2027-06-10&returnDate=2027-06-18&adults=1"
-```
-
-Example hotel search:
-
-```bash
-curl "http://localhost:3000/api/hotels?cityCode=PAR&checkInDate=2027-06-10&checkOutDate=2027-06-13&adults=2&rooms=1"
-```
-
-Example weather query:
-
-```bash
-curl "http://localhost:3000/api/weather?city=Kyoto&startDate=2027-06-10&endDate=2027-06-13"
-```
-
-## Pricing rules
-- The app always keeps the original provider currency.
-- It converts to EUR only as an additional value.
-- If conversion fails, it shows `Price unavailable` instead of a made-up number.
-
-## Notes
-This project is still a static app on GitHub Pages. The live API must be served from a Node-capable backend host, not from a static HTML file hosting service.
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10251f">
+<meta name="description" content="Plan a multi-stop journey and search provider-sourced flight, hotel, and weather data.">
+<title>Roamly — Your trip, your pace</title>
+<style>
+:root{--ink:#17251f;--muted:#718078;--bg:#f3f5f1;--panel:#fff;--line:#e5eae4;--green:#173c31;--lime:#d9f36a;--soft:#eaf0e8;--shadow:0 12px 35px rgba(24,49,39,.07);--red:#9c3d37}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}button{cursor:pointer}.app{max-width:1250px;margin:auto;min-height:100vh}.topbar{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 32px}.brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800}.brandmark{width:34px;height:34px;background:var(--green);border-radius:11px;color:var(--lime);display:grid;place-items:center}.badge{background:white;border:1px solid var(--line);border-radius:99px;color:var(--muted);padding:7px 12px;font-size:12px}main{padding:16px 32px 55px}.intro{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:12px 0 22px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}h1{font-size:clamp(30px,4vw,43px);line-height:1.08;letter-spacing:-1.6px;margin:7px 0}.intro p{margin:0;color:var(--muted)}.primary,.secondary,.danger{border:0;border-radius:12px;padding:11px 15px;font-weight:750}.primary{background:var(--green);color:white}.primary:hover{background:#245444}.secondary{background:white;border:1px solid var(--line);color:var(--ink)}.danger{background:#fff0ee;color:var(--red)}.hero{background:var(--green);color:white;padding:22px 24px;border-radius:21px;margin-bottom:20px}.hero h2{margin:4px 0 5px;font-size:23px}.hero p{margin:0;color:#d1ddd5}.notice{margin:14px 0;padding:12px 14px;border:1px solid #e8dfb4;background:#fffbea;color:#665a2d;border-radius:12px;font-size:13px}.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.8fr);gap:18px}.stack{display:grid;align-content:start;gap:18px}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:19px;box-shadow:var(--shadow)}.cardhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.cardhead h2{font-size:17px;margin:0}.muted{color:var(--muted);font-size:12px}.stoplist{display:grid;gap:12px}.empty{border:1px dashed #cbd6cc;padding:22px;text-align:center;border-radius:14px;color:var(--muted)}.stop{border:1px solid var(--line);background:#fff;border-radius:16px;overflow:hidden}.stophead{display:flex;justify-content:space-between;gap:10px;padding:14px 15px;background:#fbfcfa}.stopname{font-size:17px;font-weight:800}.stopdate{font-size:12px;color:var(--muted)}.stopbody{padding:14px;display:grid;gap:12px}.formgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.field{display:grid;gap:5px}.field label{font-size:11px;font-weight:750;color:#526158}.field input,.field select,.field textarea{min-width:0;width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:white;color:var(--ink)}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{font-size:12px;padding:9px 11px}.results{display:grid;gap:8px}.result{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}.resulttop{display:flex;justify-content:space-between;gap:10px;align-items:start}.resulttitle{font-weight:750}.price{font-size:15px;font-weight:800;color:var(--green);text-align:right}.price small{display:block;color:var(--muted);font-size:11px;font-weight:600}.resultmeta{font-size:12px;color:var(--muted);margin-top:5px}.resultmeta div{margin-top:3px}.searchmsg{padding:10px 12px;border-radius:10px;background:#f5f7f3;color:var(--muted);font-size:12px}.searchmsg.error{background:#fff0ee;color:var(--red)}.providerline{font-size:11px;color:var(--muted);margin-top:8px}.daily{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:7px}.day{padding:9px;background:var(--soft);border-radius:10px;font-size:11px}.day b{display:block;font-size:12px;margin-bottom:3px}.note{width:100%;min-height:100px;resize:vertical;padding:11px;border:1px solid var(--line);border-radius:12px}.footer{text-align:center;color:#8a968e;font-size:11px;padding:27px}.modalback{position:fixed;inset:0;background:#10251f77;display:none;align-items:center;justify-content:center;padding:18px;z-index:5}.modalback.show{display:flex}.modal{width:min(500px,100%);background:white;border-radius:18px;padding:21px}.modal h2{margin:0 0 6px}.modal p{margin:0 0 15px;color:var(--muted);font-size:13px}.modalactions{display:flex;justify-content:end;gap:8px;margin-top:16px}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr)}}
+@media(max-width:560px){.topbar{padding:0 16px}.badge{display:none}main{padding:12px 14px 40px}.intro{flex-direction:column;align-items:stretch}.intro .primary{width:100%}.card{padding:15px}.formgrid{grid-template-columns:1fr 1fr}.resulttop{display:block}.price{text-align:left;margin-top:6px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar"><div class="brand"><div class="brandmark">↗</div>roamly</div><span class="badge">MULTI-STOP TRIP PLANNER</span></header>
+<main>
+<section class="intro"><div><div class="eyebrow">Your travel workspace</div><h1>Plan your trip, stop by stop.</h1><p>Keep your itinerary together and search actual provider offers when you’re ready.</p></div><button class="primary" id="addStop">＋ Add a stop</button></section>
+<section class="hero"><div class="eyebrow" style="color:#c6d4ca">Provider-sourced travel information</div><h2>No made-up prices.</h2><p>Flight and hotel prices appear only when returned by Amadeus. Currency conversion is approximate and weather is from Open-Meteo.</p></section>
+<div class="notice"><b>Preview mode:</b> the Amadeus test environment may return limited or sample data. Test results are not a guarantee of current bookable prices. A site owner must configure production credentials for live searches.</div>
+<section class="layout">
+<div class="stack"><section class="card"><div class="cardhead"><div><h2>My itinerary</h2><div class="muted">Stops are shown in date order. Your notes stay on this device.</div></div><button class="secondary" id="addStop2">＋ Add stop</button></div><div class="stoplist" id="stops"></div></section><section class="card"><div class="cardhead"><div><h2>Trip notes</h2><div class="muted">Auto-saved in this browser</div></div></div><textarea class="note" id="tripNotes" placeholder="Ideas and details for the journey..."></textarea></section></div>
+<aside class="stack"><section class="card"><div class="cardhead"><div><h2>How prices work</h2><div class="muted">Provider name and retrieval time are shown with results.</div></div></div><p class="muted">A result’s original provider currency is preserved. The EUR amount is a separate approximate conversion from Frankfurter. If a provider or exchange rate returns no price, Roamly says so instead of calculating one.</p><p class="muted">Weather is a forecast only for dates supported by Open-Meteo. If your dates are too far ahead, no forecast is substituted.</p></section><section class="card"><div class="cardhead"><div><h2>API status</h2><div class="muted" id="apiStatus">Checking the app server…</div></div></div></section></aside>
+</section>
+<div class="footer">ROAMLY · Trip information and notes are stored in this browser. Live API searches require the backend and authorized provider credentials.</div>
+</main></div>
+<div class="modalback" id="modalBack"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><h2 id="modalTitle">Add a stop</h2><p>Add the city and your planned dates. Search prices when you want current provider results.</p><form id="stopForm"><div class="formgrid"><div class="field" style="grid-column:1/-1"><label for="city">Destination city</label><input id="city" required placeholder="e.g. Paris or PAR"></div><div class="field"><label for="startDate">Arrival</label><input id="startDate" type="date"></div><div class="field"><label for="endDate">Departure</label><input id="endDate" type="date"></div></div><div class="modalactions"><button class="secondary" type="button" id="cancel">Cancel</button><button class="primary" type="submit">Save stop</button></div></form></div></div>
+<script>
+const $=s=>document.querySelector(s);
+const STORAGE='roamly-provider-itinerary-v1';
+let state;
+try { state=JSON.parse(localStorage.getItem(STORAGE)||'{"stops":[],"notes":""}'); } catch { state={stops:[],notes:''}; }
+if(!Array.isArray(state.stops)) state.stops=[];
+let results={};
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const save=()=>localStorage.setItem(STORAGE,JSON.stringify(state));
+const stamp=value=>value?new Date(value).toLocaleString():'';
+function dateLabel(value){return value?new Date(value+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'Date not set';}
+function currencyText(price,currency,conversion){
+  if(price===null||price===undefined||!currency) return 'Price unavailable';
+  const amount=Number(price);
+  if(!Number.isFinite(amount)) return 'Price unavailable';
+  const local=`${new Intl.NumberFormat(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}).format(amount)} ${esc(currency)}`;
+  if(!conversion||conversion.eur===null||conversion.eur===undefined) return `${local} <small>EUR conversion unavailable</small>`;
+  return `${local} <small>≈ €${Number(conversion.eur).toFixed(2)} (approx.)</small>`;
+}
+function emptyMsg(text,error=false){return `<div class="searchmsg${error?' error':''}">${esc(text)}</div>`;}
+function providerLine(provider,fetchedAt){return `<div class="providerline">Source: ${esc(provider||'Provider')} · Retrieved ${esc(stamp(fetchedAt)||'time unavailable')}</div>`;}
+function flightResults(stopId){
+ const result=results[stopId]?.flights;
+ if(!result)return '';
+ if(result.loading)return emptyMsg('Searching Amadeus flight offers…');
+ if(result.error)return emptyMsg(result.error,true);
+ if(!result.data?.offers?.length)return emptyMsg(result.data?.message||'No flight offers were returned. Price unavailable.');
+ return result.data.offers.map(offer=>{
+   const legs=(offer.itineraries||[]).map((itin,index)=>`<div>${index?'Return':'Flight'} · ${esc(itin.duration||'Duration unavailable')} · ${(itin.segments||[]).map(seg=>`${esc(seg.airline||'Airline unavailable')} ${esc(seg.flightNumber||'')} · ${esc(seg.from||'')} ${esc(seg.departureAt||'')} → ${esc(seg.to||'')} ${esc(seg.arrivalAt||'')} · ${Number(seg.stops||0)===0?'Nonstop':`${Number(seg.stops)} stop(s)`}`).join('<br>')}</div>`).join('');
+   return `<article class="result"><div class="resulttop"><div class="resulttitle">Flight option ${esc(offer.id||'')}</div><div class="price">${currencyText(offer.price,offer.currency,offer.eurConversion)}</div></div><div class="resultmeta">${legs||'Flight details unavailable.'}</div>${providerLine(result.data.provider,result.data.fetchedAt)}</article>`;
+ }).join('');
+}
+function hotelResults(stopId){
+ const result=results[stopId]?.hotels;
+ if(!result)return '';
+ if(result.loading)return emptyMsg('Searching Amadeus hotel offers…');
+ if(result.error)return emptyMsg(result.error,true);
+ if(!result.data?.offers?.length)return emptyMsg(result.data?.message||'No priced hotel offers were returned. Price unavailable.');
+ return result.data.offers.map(hotel=>`<article class="result"><div class="resulttop"><div><div class="resulttitle">${esc(hotel.name||'Hotel name unavailable')}</div><div class="resultmeta">${esc(hotel.address?.lines?.join(', ')||hotel.address?.cityName||'Location details unavailable')}${hotel.rating?` · Rating ${esc(hotel.rating)}`:''}</div></div><div class="price">${currencyText(hotel.price,hotel.currency,hotel.eurConversion)}</div></div><div class="resultmeta">${esc(hotel.roomType||'Room details unavailable')}${hotel.cancellation?` · ${esc(hotel.cancellation)}`:''}</div>${providerLine(result.data.provider,result.data.fetchedAt)}</article>`).join('');
+}
+function weatherResults(stopId){
+ const result=results[stopId]?.weather;
+ if(!result)return '';
+ if(result.loading)return emptyMsg('Loading forecast from Open-Meteo…');
+ if(result.error)return emptyMsg(result.error,true);
+ const data=result.data;
+ if(!data?.available)return `${emptyMsg(data?.message||'Forecast unavailable for these dates.')}${providerLine(result.provider,result.fetchedAt)}`;
+ const days=(data.daily||[]).map(day=>`<div class="day"><b>${esc(dateLabel(day.date))}</b>${day.minC===null?'—':`${esc(day.minC)}°`} / ${day.maxC===null?'—':`${esc(day.maxC)}°`} C<br>Rain: ${day.precipitationProbability===null?'—':`${esc(day.precipitationProbability)}%`}<br>${esc(weatherName(day.weatherCode))}</div>`).join('');
+ return `<div class="muted" style="margin-bottom:7px">${esc(data.location||'Forecast')} · Forecast, not climate history</div><div class="daily">${days||'No daily forecast data available.'}</div>${providerLine(result.provider,result.fetchedAt)}`;
+}
+function weatherName(code){const names={0:'Clear',1:'Mostly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorm',96:'Thunderstorm with hail',99:'Thunderstorm with hail'};return names[code]||'Condition unavailable';}
+function sortedStops(){return [...state.stops].sort((a,b)=>(a.startDate||'9999-12-31').localeCompare(b.startDate||'9999-12-31')||(a.endDate||'').localeCompare(b.endDate||''));}
+function render(){
+ const host=$('#stops');
+ if(!state.stops.length){host.innerHTML='<div class="empty"><b>Your itinerary is empty.</b><br>Add a stop to begin planning.</div>';return;}
+ host.innerHTML=sortedStops().map(stop=>`<article class="stop" data-stop="${esc(stop.id)}"><header class="stophead"><div><div class="stopname">${esc(stop.city)}</div><div class="stopdate">${esc(dateLabel(stop.startDate))} → ${esc(dateLabel(stop.endDate))}</div></div><button class="danger" data-delete="${esc(stop.id)}" aria-label="Remove ${esc(stop.city)}">Remove</button></header><div class="stopbody"><div class="formgrid"><div class="field"><label>Departure airport / city</label><input data-val="origin" placeholder="e.g. LHR" value="${esc(stop.origin||'')}"></div><div class="field"><label>Arrival airport</label><input data-val="airport" placeholder="e.g. CDG" value="${esc(stop.airport||'')}"></div><div class="field"><label>Flight passengers</label><input data-val="flightAdults" type="number" min="1" max="9" value="${esc(stop.flightAdults||1)}"></div><div class="field"><label>Cabin</label><select data-val="travelClass">${['ECONOMY','PREMIUM_ECONOMY','BUSINESS','FIRST'].map(x=>`<option ${stop.travelClass===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="field"><label>Hotel guests</label><input data-val="hotelAdults" type="number" min="1" max="9" value="${esc(stop.hotelAdults||1)}"></div><div class="field"><label>Hotel rooms</label><input data-val="rooms" type="number" min="1" max="9" value="${esc(stop.rooms||1)}"></div></div><div class="actions"><button class="secondary" data-search="flights">Search flights</button><button class="secondary" data-search="hotels">Search hotels</button><button class="secondary" data-search="weather">Check weather</button></div><div class="results" data-results="flights">${flightResults(stop.id)}</div><div class="results" data-results="hotels">${hotelResults(stop.id)}</div><div class="results" data-results="weather">${weatherResults(stop.id)}</div><div class="field"><label>Notes</label><textarea data-val="notes" placeholder="Notes for this stop">${esc(stop.notes||'')}</textarea></div></div></article>`).join('');
+ host.querySelectorAll('[data-delete]').forEach(button=>button.addEventListener('click',()=>{state.stops=state.stops.filter(s=>s.id!==button.dataset.delete);delete results[button.dataset.delete];save();render();}));
+ host.querySelectorAll('.stop').forEach(card=>{
+   const id=card.dataset.stop;
+   card.querySelectorAll('[data-val]').forEach(field=>field.addEventListener('change',()=>{const stop=state.stops.find(s=>s.id===id);if(!stop)return;stop[field.dataset.val]=field.value;save();if(['origin','airport','flightAdults','travelClass','hotelAdults','rooms'].includes(field.dataset.val)){delete results[id];render();}}));
+   card.querySelector('[data-val="notes"]').addEventListener('input',event=>{const stop=state.stops.find(s=>s.id===id);if(stop){stop.notes=event.target.value;save();}});
+   card.querySelectorAll('[data-search]').forEach(button=>button.addEventListener('click',()=>runSearch(id,button.dataset.search)));
+ });
+}
+async function callApi(path,params){const query=new URLSearchParams(params);const response=await fetch(`/api/${path}?${query}`);const data=await response.json().catch(()=>({error:'The server returned an unreadable response.'}));if(!response.ok)throw new Error(data.error||'Search unavailable. Please try again.');return data;}
+async function runSearch(id,type){
+ const stop=state.stops.find(item=>item.id===id);if(!stop)return;
+ results[id]||={};results[id][type]={loading:true};render();
+ try{
+   let data;
+   if(type==='flights'){
+     if(!stop.origin||!stop.airport)throw new Error('Enter a departure and arrival airport code, such as LHR and CDG.');
+     if(!stop.startDate)throw new Error('Add an arrival date before searching flights.');
+     data=await callApi('flights',{origin:stop.origin,destination:stop.airport,departureDate:stop.startDate,adults:stop.flightAdults||1,travelClass:stop.travelClass||'ECONOMY'});
+   }else if(type==='hotels'){
+     if(!stop.startDate||!stop.endDate)throw new Error('Add arrival and departure dates before searching hotels.');
+     data=await callApi('hotels',{city:stop.city,checkInDate:stop.startDate,checkOutDate:stop.endDate,adults:stop.hotelAdults||1,rooms:stop.rooms||1});
+   }else{
+     if(!stop.startDate||!stop.endDate)throw new Error('Add arrival and departure dates before checking weather.');
+     data=await callApi('weather',{city:stop.city,startDate:stop.startDate,endDate:stop.endDate});
+   }
+   results[id][type]=type==='weather'?{data,provider:data.provider,fetchedAt:data.fetchedAt}:{data};
+ }catch(error){results[id][type]={error:error.message};}
+ render();
+}
+function openModal(){$('#modalBack').classList.add('show');$('#city').focus();}
+function closeModal(){$('#modalBack').classList.remove('show');$('#stopForm').reset();}
+$('#addStop').onclick=openModal;$('#addStop2').onclick=openModal;$('#cancel').onclick=closeModal;$('#modalBack').addEventListener('click',e=>{if(e.target===$('#modalBack'))closeModal();});
+$('#stopForm').addEventListener('submit',event=>{event.preventDefault();const city=$('#city').value.trim();if(!city)return;state.stops.push({id:crypto.randomUUID(),city,startDate:$('#startDate').value,endDate:$('#endDate').value,origin:'',airport:'',flightAdults:1,hotelAdults:1,rooms:1,travelClass:'ECONOMY',notes:''});save();closeModal();render();});
+$('#tripNotes').value=state.notes||'';$('#tripNotes').addEventListener('input',event=>{state.notes=event.target.value;save();});
+fetch('/api/health').then(r=>r.json()).then(data=>{$('#apiStatus').textContent=data.credentialsConfigured?`Connected to backend · Amadeus ${data.environment} environment`:'Backend available · Amadeus credentials have not been configured';}).catch(()=>{$('#apiStatus').textContent='Backend not connected. Open this site through its Node server to search provider data.';});
+render();
+</script>
+</body>
+</html>
