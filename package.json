@@ -1,8 +1,8 @@
 {
-  "name": "roamly-api",
+  "name": "roamly",
   "version": "1.0.0",
   "private": true,
-  "description": "Secure server-side Amadeus search API for Roamly",
+  "description": "Roamly - secure travel search backend using real travel APIs",
   "scripts": {
     "start": "node server.js"
   },
